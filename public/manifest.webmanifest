@@ -1,0 +1,16 @@
+{
+  "name": "Team Synf — Collective",
+  "short_name": "Synf",
+  "description": "Student-led music and creative collective. Parties, nightlife, DJ nights, events, magazine and more.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#08070a",
+  "theme_color": "#08070a",
+  "categories": ["music", "events", "entertainment", "lifestyle"],
+  "icons": [
+    { "src": "/synf-mark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/synf-mark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

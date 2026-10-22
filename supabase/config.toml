@@ -1,0 +1,26 @@
+[functions.admin-signup]
+verify_jwt = false
+
+[functions.public-form]
+verify_jwt = false
+
+[functions.application-submit]
+verify_jwt = false
+
+[functions.application-action]
+verify_jwt = true
+
+[functions.team-accounts]
+verify_jwt = true
+
+[functions.login-secret]
+verify_jwt = true
+
+[functions.roles-permissions]
+verify_jwt = true
+
+[functions.shopify-webhook]
+verify_jwt = false
+
+[functions.shopify-sync]
+verify_jwt = true

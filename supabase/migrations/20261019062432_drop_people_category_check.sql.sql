@@ -1,0 +1,1 @@
+ALTER TABLE public.people DROP CONSTRAINT IF EXISTS people_category_check;

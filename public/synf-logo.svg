@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180">
+  <rect width="320" height="180" fill="#fff"/>
+  <g fill="none" stroke="#c9c9c9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".62">
+    <circle cx="226" cy="28" r="9"/>
+    <path d="M219 37 L194 68 L158 95"/>
+    <path d="M219 37 L250 54 L281 82"/>
+    <path d="M196 67 L164 60 L132 71"/>
+    <path d="M250 54 L267 30 L288 17"/>
+    <path d="M158 95 L143 125 L116 148"/>
+    <path d="M158 95 L186 119 L212 148"/>
+    <path d="M226 28 L235 19"/>
+  </g>
+  <g fill="none" stroke="#e5e5e5" stroke-width="1.4" opacity=".7">
+    <path d="M80 27 L105 20 M67 43 L99 34 M97 145 L126 133 M207 158 L226 141"/>
+  </g>
+  <text x="83" y="101" fill="#171717" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="800" letter-spacing="-1.8">SYNF</text>
+  <text x="168" y="101" fill="#171717" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="800" letter-spacing="-1.5">TEAM</text>
+</svg>
