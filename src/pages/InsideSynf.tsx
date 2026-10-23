@@ -5,6 +5,7 @@ import type { InsideStoryRow, InsideStoryTypeRow } from '@/lib/platform-types';
 import { Reveal } from '@/components/Reveal';
 import { ArrowRight, ArrowLeft, Sparkles, Calendar, Users } from 'lucide-react';
 import { formatDate } from '@/lib/format';
+import { useSeo, collectionPageJsonLd } from '@/lib/seo';
 
 export function InsideSynf() {
   const [stories, setStories] = useState<InsideStoryRow[]>([]);
@@ -27,6 +28,14 @@ export function InsideSynf() {
   const filtered = stories.filter(s => activeType === 'all' || s.story_type_id === activeType);
   const featured = stories.find(s => s.is_featured) || filtered[0];
   const rest = filtered.filter(s => s.id !== featured?.id);
+
+  useSeo({
+    title: 'Inside Synf — Crew Spotlights & Behind-the-Scenes Stories',
+    description: `Crew spotlights, behind-the-scenes stories and production diaries from the ${stories.length} people who build Team Synf nights in Hyderabad.`,
+    path: '/inside-synf',
+    keywords: ['inside Team Synf', 'behind the scenes Hyderabad', 'crew stories', 'event production India', 'student collective stories', 'nightlife production diary', 'DJ behind the scenes'],
+    jsonLd: collectionPageJsonLd('Inside Synf', '/inside-synf', stories.length),
+  });
 
   return (
     <div className="bg-ink-950 min-h-screen">
@@ -145,6 +154,16 @@ export function InsideStoryDetail() {
       </div>
     </div>
   );
+
+  useSeo({
+    title: `${story.title} — Inside Synf`,
+    description: story.summary || `${story.title} — a behind-the-scenes story from Team Synf.`,
+    path: `/inside-synf/${story.slug}`,
+    image: story.cover_image_url,
+    type: 'article',
+    publishedTime: story.published_at,
+    keywords: [story.title, 'Inside Synf', 'behind the scenes', 'Team Synf crew', 'Hyderabad events', story.story_type?.name || ''],
+  });
 
   return (
     <div className="bg-ink-950 min-h-screen">

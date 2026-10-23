@@ -4,6 +4,7 @@ import type { SiteContentRow } from '@/lib/types';
 import { Reveal } from '@/components/Reveal';
 import { FileText, Shield, Copyright } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useSeo } from '@/lib/seo';
 
 const META = {
   terms: { slug: 'terms', title: 'Terms', icon: FileText },
@@ -59,6 +60,13 @@ export function Legal({ kind }: { kind: 'terms' | 'privacy' | 'copyright' }) {
   }, [meta.slug]);
 
   const body = content?.body || DEFAULTS[kind];
+
+  useSeo({
+    title: `${meta.title} — Team Synf`,
+    description: `${meta.title} for Team Synf — the student-led collective creating parties, nightlife and curated music experiences in Hyderabad.`,
+    path: `/${meta.slug}`,
+    keywords: ['Team Synf', meta.title.toLowerCase(), 'legal', 'terms of use', 'privacy policy', 'copyright', 'event policies India', 'Hyderabad event terms'],
+  });
 
   return (
     <div className="bg-ink-950">

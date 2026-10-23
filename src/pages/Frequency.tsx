@@ -5,6 +5,7 @@ import type { FrequencyArticleRow, FrequencyCategoryRow } from '@/lib/platform-t
 import { Reveal } from '@/components/Reveal';
 import { ArrowRight, ArrowLeft, Search, Clock, Calendar, X } from 'lucide-react';
 import { formatDate } from '@/lib/format';
+import { useSeo, collectionPageJsonLd } from '@/lib/seo';
 
 export function Frequency() {
   const [articles, setArticles] = useState<FrequencyArticleRow[]>([]);
@@ -33,6 +34,14 @@ export function Frequency() {
 
   const featured = articles.find(a => a.is_featured) || articles.find(a => a.is_pinned) || filtered[0];
   const rest = filtered.filter(a => a.id !== featured?.id);
+
+  useSeo({
+    title: 'Frequency — Team Synf Magazine: Culture, Music & Events',
+    description: `Synf's creative magazine — ${articles.length} articles on culture, music, events and the stories behind the nights in Hyderabad.`,
+    path: '/frequency',
+    keywords: ['Team Synf Frequency', 'Hyderabad music magazine', 'nightlife culture India', 'event blog Hyderabad', 'DJ culture India', 'student collective magazine', 'party culture blog'],
+    jsonLd: collectionPageJsonLd('Frequency Magazine', '/frequency', articles.length),
+  });
 
   return (
     <div className="bg-ink-950 min-h-screen">
@@ -169,6 +178,17 @@ export function FrequencyArticle() {
 
   if (loading) return <div className="bg-ink-950 min-h-screen" />;
   if (!article) return <NotFound />;
+
+  useSeo({
+    title: `${article.title} — Frequency`,
+    description: article.excerpt || article.subtitle || `${article.title} — a story from Team Synf's Frequency magazine on culture, music and nightlife.`,
+    path: `/frequency/${article.slug}`,
+    image: article.cover_image_url,
+    type: 'article',
+    publishedTime: article.published_at,
+    author: article.author_name || undefined,
+    keywords: [article.title, 'Team Synf Frequency', 'Hyderabad nightlife', 'music culture India', article.category?.name || ''],
+  });
 
   return (
     <div className="bg-ink-950 min-h-screen">

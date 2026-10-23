@@ -7,6 +7,7 @@ import type { EventRow as EventRowType } from '@/lib/types';
 import { Reveal } from '@/components/Reveal';
 import { Ticket, User, Heart, Settings, Calendar, Trash2, Check, LogIn, Mail } from 'lucide-react';
 import { formatDate } from '@/lib/format';
+import { useSeo } from '@/lib/seo';
 
 export function SynfPass() {
   const { user, loading } = useAuth();
@@ -31,6 +32,13 @@ export function SynfPass() {
       setProfileLoading(false);
     })();
   }, [user]);
+
+  useSeo({
+    title: 'Synf Pass — Your Community Profile & Saved Events',
+    description: 'Your community pass to Team Synf. Save events, follow nights, build your profile and collect attendance badges for Hyderabad events.',
+    path: '/synf-pass',
+    keywords: ['Synf Pass', 'Team Synf community', 'event tickets Hyderabad', 'save events', 'community profile', 'nightlife membership Hyderabad', 'event pass India'],
+  });
 
   if (loading || profileLoading) return <div className="bg-ink-950 min-h-screen" />;
   if (!user) return <PassLanding />;

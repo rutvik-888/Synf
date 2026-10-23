@@ -5,6 +5,7 @@ import type { SecretDropRow, SecretDropStageRow } from '@/lib/platform-types';
 import { Reveal } from '@/components/Reveal';
 import { ArrowRight, Lock, Eye, EyeOff, Bell, Flame } from 'lucide-react';
 import { countdown } from '@/lib/format';
+import { useSeo, collectionPageJsonLd } from '@/lib/seo';
 
 export function Drops() {
   const [drops, setDrops] = useState<SecretDropRow[]>([]);
@@ -17,6 +18,14 @@ export function Drops() {
       setLoading(false);
     })();
   }, []);
+
+  useSeo({
+    title: 'Secret Drops — Upcoming Reveals & Teasers from Team Synf',
+    description: `Cryptic teasers and staged reveals. ${drops.length} secret drops from Team Synf — something is coming and you'll see it here first.`,
+    path: '/drops',
+    keywords: ['Team Synf drops', 'secret drops Hyderabad', 'event teasers India', 'upcoming parties Hyderabad', 'limited drops', 'Hyderabad nightlife teasers', 'Synf reveals'],
+    jsonLd: collectionPageJsonLd('Secret Drops', '/drops', drops.length),
+  });
 
   return (
     <div className="bg-ink-950 min-h-screen">
@@ -136,6 +145,15 @@ export function DropDetail() {
 
   const cd = drop.reveal_at ? countdown(drop.reveal_at) : null;
   const isRevealed = drop.status === 'completed' || (cd?.past ?? false);
+
+  useSeo({
+    title: `${drop.title} — Secret Drop | Team Synf`,
+    description: drop.teaser_description || `${drop.title} — a secret drop from Team Synf. Something is coming.`,
+    path: `/drops/${drop.slug}`,
+    image: drop.poster_url || drop.teaser_media_url || undefined,
+    type: 'article',
+    keywords: [drop.title, 'Team Synf drop', 'secret drop Hyderabad', 'Hyderabad event teaser', 'upcoming event India'],
+  });
 
   return (
     <div className="bg-ink-950 min-h-screen">

@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import type { JobPostingRow, FormField } from '@/lib/types';
 import { submitApplication } from '@/lib/api';
 import { Reveal } from '@/components/Reveal';
+import { useSeo, breadcrumbJsonLd } from '@/lib/seo';
 
 export function JobApply() {
   const { slug } = useParams();
@@ -33,6 +34,19 @@ export function JobApply() {
   }, [slug]);
 
   const fields: FormField[] = job?.form_fields || [];
+
+  useSeo({
+    title: `Apply: ${job?.title || 'Role'} — Team Synf`,
+    description: `Apply to ${job?.title || 'a role'} at Team Synf${job?.department ? ` · ${job.department}` : ''}. Submit your application in minutes.`,
+    path: `/jobs/${job?.slug}/apply`,
+    keywords: [job?.title || 'job application', 'Team Synf apply', 'student jobs Hyderabad', 'Hyderabad creative jobs', 'job application India'],
+    jsonLd: job ? breadcrumbJsonLd([
+      { name: 'Home', path: '/' },
+      { name: 'Jobs', path: '/jobs' },
+      { name: job.title, path: `/jobs/${job.slug}` },
+      { name: 'Apply', path: `/jobs/${job.slug}/apply` },
+    ]) : undefined,
+  });
 
   function setAnswer(id: string, val: unknown) { setAnswers(a => ({ ...a, [id]: val })); }
 

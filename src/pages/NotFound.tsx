@@ -4,6 +4,7 @@ import { ArrowRight, Radio, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { ParticleField } from '@/components/ParticleField';
 import { useSiteSections } from '@/lib/useSiteSections';
+import { useSeo } from '@/lib/seo';
 
 export function NotFound() {
   const [mounted, setMounted] = useState(false);
@@ -55,6 +56,13 @@ export function NotFound() {
     el.addEventListener('mousemove', onMove);
     return () => el.removeEventListener('mousemove', onMove);
   }, []);
+
+  useSeo({
+    title: '404 — Page Not Found | Team Synf',
+    description: 'This page doesn\'t exist. Explore Team Synf events, the collective and upcoming nights in Hyderabad.',
+    path: '/404',
+    keywords: ['Team Synf 404', 'page not found'],
+  });
 
   return (
     <div
