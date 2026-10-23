@@ -5,6 +5,7 @@ import { PersonCard } from '@/components/PersonCard';
 import { Reveal } from '@/components/Reveal';
 import { Users, Sparkles, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useSeo, collectionPageJsonLd, personJsonLd } from '@/lib/seo';
 
 export function People() {
   const [people, setPeople] = useState<PersonRow[]>([]);
@@ -45,6 +46,17 @@ export function People() {
   const filtered = cat === 'all'
     ? people
     : people.filter(p => p.category === cat || p.secondary_category === cat);
+
+  useSeo({
+    title: 'The Collective — Team Synf People, DJs & Creatives',
+    description: `Meet the ${people.length} students, DJs, creatives and collaborators behind every Team Synf night in Hyderabad.`,
+    path: '/people',
+    keywords: ['Team Synf collective', 'DJs Hyderabad', 'student creatives', 'event photographers Hyderabad', 'party DJs India', 'creative collective members', 'Synf crew'],
+    jsonLd: [
+      collectionPageJsonLd('The Collective', '/people', people.length),
+      ...people.slice(0, 10).map(p => personJsonLd(p)),
+    ],
+  });
 
   return (
     <div className="bg-ink-950">

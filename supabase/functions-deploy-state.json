@@ -1,0 +1,45 @@
+{
+  "projectId": "72162642",
+  "functions": {
+    "admin-signup": {
+      "hasChanged": false,
+      "hash": "a589788fe1c51d5fc078007bc1e95d11ea28dbec6e9cde970f04a9d224bd6580"
+    },
+    "application-action": {
+      "hasChanged": false,
+      "hash": "4dbffad4bbf2517974cfd93915bbef4ced786d688c31e8293a583fe26765cd20"
+    },
+    "application-submit": {
+      "hasChanged": false,
+      "hash": "3ddca93153585a4b01e6b0134635323ea729116eff48542b06a2d44c9ce2ad0d"
+    },
+    "login-secret": {
+      "hasChanged": false,
+      "hash": "1a3ac6ecf8303cf848e49872663cb6dba403a8e287969cea7ad05e6770a3c661"
+    },
+    "public-form": {
+      "hasChanged": false,
+      "hash": "cc0df80cca45c77cb7b41f9774bf4b448c722b2a1e1cbf5437680a467ac6a2ca"
+    },
+    "roles-permissions": {
+      "hasChanged": false,
+      "hash": "96705dff49c8da3fcd82655210b85fdf45b689d60525e8892d00023691624240"
+    },
+    "shopify-sync": {
+      "hasChanged": false,
+      "hash": "56156e30b4bbeae5ab7489aa0554b58b83566d059e3399cf45dfbd141a28e37f"
+    },
+    "shopify-webhook": {
+      "hasChanged": false,
+      "hash": "ae947bab6bc3ecaefd484189c62b92c242095326e8a6be30ec5ca67bad7fe4b8"
+    },
+    "team-accounts": {
+      "hasChanged": false,
+      "hash": "61b883f31b07dd518d15e914f1f9c3528e8dd67e8c367a30bcc36892b89f3d86"
+    },
+    "sitemap": {
+      "hasChanged": false,
+      "hash": "763ec0b74423443e4ef4cf588eee41ebce037f61c8dc98aaae27e51c11e366a6"
+    }
+  }
+}

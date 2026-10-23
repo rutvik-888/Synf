@@ -6,6 +6,7 @@ import type { JobPostingRow } from '@/lib/types';
 import { JOB_ARRANGEMENT_LABELS } from '@/lib/types';
 import { Reveal } from '@/components/Reveal';
 import { formatDate } from '@/lib/format';
+import { useSeo, jobPostingJsonLd, breadcrumbJsonLd } from '@/lib/seo';
 
 export function JobDetail() {
   const { slug } = useParams();
@@ -36,6 +37,23 @@ export function JobDetail() {
       <Link to="/jobs" className="btn-primary mt-6">View all open roles</Link>
     </div>
   );
+
+  useSeo({
+    title: `${job.title} — Team Synf`,
+    description: `${job.title} at Team Synf${job.department ? ` · ${job.department}` : ''}. ${job.description?.slice(0, 120) || 'Join the student-led collective building nights that matter in Hyderabad.'}`,
+    path: `/jobs/${job.slug}`,
+    type: 'article',
+    publishedTime: job.created_at,
+    keywords: [job.title, 'Team Synf jobs', job.department || '', 'student jobs Hyderabad', 'Hyderabad creative jobs', 'part time jobs Hyderabad'],
+    jsonLd: [
+      jobPostingJsonLd({ ...job, posted_at: job.created_at }),
+      breadcrumbJsonLd([
+        { name: 'Home', path: '/' },
+        { name: 'Jobs', path: '/jobs' },
+        { name: job.title, path: `/jobs/${job.slug}` },
+      ]),
+    ],
+  });
 
   return (
     <div className="bg-ink-950">

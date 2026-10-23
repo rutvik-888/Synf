@@ -11,6 +11,7 @@ import { formatDate, countdown } from '@/lib/format';
 import { submitPublicForm } from '@/lib/api';
 import { SynfMark } from '@/components/SynfMark';
 import { ParticleField } from '@/components/ParticleField';
+import { useSeo, organizationJsonLd, websiteJsonLd } from '@/lib/seo';
 
 const MARQUEE_A = ['WE DON\'T DO ORDINARY', 'PARTIES', 'NIGHTLIFE', 'DJ NIGHTS', 'CURATED EXPERIENCES', 'HYDERABAD', 'STUDENT-LED', 'AFTER DARK'];
 const MARQUEE_B = ['MUSIC', 'CULTURE', 'PEOPLE', 'MOMENTS', 'COLLABORATE', 'CREATE', 'TEAM SYNF', 'LESS ORDINARY'];
@@ -65,6 +66,15 @@ export function Home() {
 
   const heroData = content?.data as { headline?: string; subhead?: string } | null;
   const subhead = heroData?.subhead || 'Student-led collective. Parties, nightlife, DJ nights and curated experiences across Hyderabad.';
+
+  useSeo({
+    title: 'Team Synf — We don\'t do ordinary.',
+    description: 'Student-led creative collective in Hyderabad. Parties, nightlife, DJ nights, music events and curated experiences. We don\'t do ordinary.',
+    path: '/',
+    keywords: ['Team Synf', 'synf', 'Hyderabad events', 'Hyderabad nightlife', 'student collective', 'DJ nights', 'parties Hyderabad', 'music events India', 'college events', 'nightlife Hyderabad', 'event collective', 'creative collective'],
+    image: featured?.cover_image_url || undefined,
+    jsonLd: [organizationJsonLd(), websiteJsonLd()],
+  });
 
   const upcoming = events.filter(e => ['announced', 'upcoming'].includes(e.status));
   const featured = events.find(e => e.featured) || events[0];

@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import type { EventRow } from '@/lib/types';
 import { EventCard } from '@/components/EventCard';
 import { Reveal } from '@/components/Reveal';
+import { useSeo, collectionPageJsonLd } from '@/lib/seo';
 
 const STATUS_FILTERS = [
   { key: 'all', label: 'All' },
@@ -47,6 +48,14 @@ export function EventsArchive() {
 
   const upcoming = filtered.filter(e => ['announced', 'upcoming'].includes(e.status));
   const past = filtered.filter(e => ['completed', 'cancelled', 'postponed'].includes(e.status));
+
+  useSeo({
+    title: 'Events — Parties, DJ Nights & Experiences in Hyderabad',
+    description: `Browse all Team Synf events — ${events.length} parties, DJ nights and curated experiences across Hyderabad. Upcoming events, past archive and ticket links.`,
+    path: '/events',
+    keywords: ['Team Synf events', 'Hyderabad events', 'Hyderabad parties', 'DJ nights Hyderabad', 'nightlife Hyderabad', 'college events', 'music events India', 'event archive'],
+    jsonLd: collectionPageJsonLd('Team Synf Events', '/events', events.length),
+  });
 
   return (
     <div className="bg-ink-950 min-h-screen">

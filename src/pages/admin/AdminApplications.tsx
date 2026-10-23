@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, UserSquare, ArrowLeft, CheckCircle, Calendar, XCircle, Mail, Clock, RotateCcw, FileText, ExternalLink } from 'lucide-react';
+import { Search, UserSquare, ArrowLeft, CheckCircle, Calendar, XCircle, Mail, Clock, RotateCcw, FileText, ExternalLink, Copy, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import type { ApplicationRow, ApplicationStatus, FormField, InterviewRow, ApplicationStatusHistoryRow, EmailLogRow, JobPostingRow } from '@/lib/types';
@@ -27,6 +27,7 @@ export function AdminApplications() {
   const [jobs, setJobs] = useState<JobPostingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [showDuplicates, setShowDuplicates] = useState(false);
 
   useEffect(() => {
     if (!canRead) return;
@@ -51,7 +52,28 @@ export function AdminApplications() {
     })();
   }, [canRead]);
 
+  // Detect duplicate applicants by email or phone
+  const duplicateMap = useMemo(() => {
+    const byEmail = new Map<string, number>();
+    const byPhone = new Map<string, number>();
+    items.forEach(a => {
+      if (a.email) byEmail.set(a.email, (byEmail.get(a.email) || 0) + 1);
+      const phone = (a as Record<string, unknown>).phone as string | undefined;
+      if (phone) byPhone.set(phone, (byPhone.get(phone) || 0) + 1);
+    });
+    const dupes = new Set<string>();
+    items.forEach(a => {
+      if (a.email && (byEmail.get(a.email) || 0) > 1) dupes.add(a.id);
+      const phone = (a as Record<string, unknown>).phone as string | undefined;
+      if (phone && (byPhone.get(phone) || 0) > 1) dupes.add(a.id);
+    });
+    return dupes;
+  }, [items]);
+
+  const duplicateCount = duplicateMap.size;
+
   const filtered = items.filter(a => {
+    if (showDuplicates && !duplicateMap.has(a.id)) return false;
     if (statusFilter !== 'all' && a.status !== statusFilter) return false;
     if (jobFilter !== 'all' && a.job_id !== jobFilter) return false;
     if (q) {
@@ -97,6 +119,9 @@ export function AdminApplications() {
           <option value="all">All stages</option>
           {Object.entries(APPLICATION_STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
+        <button onClick={() => setShowDuplicates(v => !v)} className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm transition ${showDuplicates ? 'border-gold-400/40 bg-gold-400/15 text-gold-400' : 'border-white/10 text-white/50 hover:text-white'}`}>
+          <Copy size={14} /> Duplicates {duplicateCount > 0 && `(${duplicateCount})`}
+        </button>
       </div>
 
       {/* Table */}
@@ -114,7 +139,7 @@ export function AdminApplications() {
               {filtered.map(a => (
                 <tr key={a.id} className="border-b border-white/5 last:border-0 hover:bg-white/5">
                   <td className="p-3 font-mono text-xs text-synf-300">{a.application_code || '—'}</td>
-                  <td className="p-3"><div className="font-semibold text-white">{a.full_name}</div><div className="text-xs text-white/50">{a.email}</div></td>
+                  <td className="p-3"><div className="flex items-center gap-1.5"><span className="font-semibold text-white">{a.full_name}</span>{duplicateMap.has(a.id) && <span className="inline-flex items-center gap-0.5 rounded-full bg-gold-400/15 px-1.5 py-0.5 text-[9px] font-bold text-gold-400" title="Duplicate applicant — same email or phone found in multiple applications"><AlertTriangle size={9} /> DUP</span>}</div><div className="text-xs text-white/50">{a.email}</div></td>
                   <td className="p-3 hidden sm:table-cell text-white/70">{(a as ApplicationRow & { job_title?: string }).job_title}</td>
                   <td className="p-3 hidden md:table-cell text-white/50">{formatDate(a.created_at)}</td>
                   <td className="p-3"><span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest ${STATUS_COLORS[a.status]}`}>{APPLICATION_STATUS_LABELS[a.status]}</span></td>

@@ -1,8 +1,28 @@
 User-agent: *
 Allow: /
+Allow: /events/
+Allow: /people
+Allow: /jobs/
+Allow: /goods/
+Allow: /about
+Allow: /collaborate
+Allow: /apply
+Allow: /contact
+Allow: /pass
+Allow: /community
+Allow: /campaigns/
 Disallow: /admin
 Disallow: /admin/
 Disallow: /crew
 Disallow: /crew/
+Disallow: /api
+
+# Allow crawling of images
+User-agent: Googlebot-Image
+Allow: /
+
+# Allow JS rendering
+User-agent: Googlebot
+Allow: /
 
 Sitemap: https://synf.bolt.host/sitemap.xml

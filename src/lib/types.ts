@@ -267,6 +267,22 @@ export interface FormField {
   placeholder?: string;
 }
 
+export interface FormDefinitionRow {
+  id: string;
+  form_key: 'contact' | 'collaboration';
+  version: number;
+  is_active: boolean;
+  title: string;
+  intro: string | null;
+  consent_text: string;
+  success_message: string | null;
+  fields: FormField[];
+  published_at: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export type ApplicationStatus = 'submitted' | 'under_review' | 'approved' | 'interview_invited' | 'rejected' | 'withdrawn';
 
 export const APPLICATION_STATUS_LABELS: Record<ApplicationStatus, string> = {

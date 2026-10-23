@@ -4,6 +4,7 @@ import type { CommunityWallPostRow, CommunityWallCategoryRow } from '@/lib/platf
 import { Reveal } from '@/components/Reveal';
 import { Camera, X, ChevronLeft, ChevronRight, Upload, Image as ImageIcon, CheckCircle2, AlertCircle } from 'lucide-react';
 import { submitPublicForm } from '@/lib/api';
+import { useSeo, collectionPageJsonLd } from '@/lib/seo';
 
 export function CommunityWall() {
   const [posts, setPosts] = useState<CommunityWallPostRow[]>([]);
@@ -26,6 +27,14 @@ export function CommunityWall() {
   }, []);
 
   const filtered = posts.filter(p => activeCat === 'all' || p.category_id === activeCat);
+
+  useSeo({
+    title: 'Community Wall — Moments from Team Synf Nights',
+    description: `Browse ${posts.length} community-submitted photos and videos from Team Synf events in Hyderabad. See the nights through the eyes of the people who lived them.`,
+    path: '/community',
+    keywords: ['Team Synf community', 'Hyderabad party photos', 'event photos India', 'nightlife photography Hyderabad', 'community wall', 'party photos Hyderabad', 'Synf events photos'],
+    jsonLd: collectionPageJsonLd('Community Wall', '/community', posts.length),
+  });
 
   const closeLightbox = () => setLightbox(null);
   const next = () => setLightbox(i => i === null ? i : (i + 1) % filtered.length);

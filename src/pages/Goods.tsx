@@ -8,6 +8,7 @@ import { Reveal } from '@/components/Reveal';
 import { ParticleField } from '@/components/ParticleField';
 import { ShoppingBag, ArrowRight, ArrowLeft, Calendar, ExternalLink, Search, ChevronDown, Check, AlertCircle, Tag } from 'lucide-react';
 import { formatDate } from '@/lib/format';
+import { useSeo, collectionPageJsonLd, productJsonLd, breadcrumbJsonLd } from '@/lib/seo';
 
 const AVAILABILITY_STYLES: Record<string, string> = {
   coming_soon: 'border-gold-400/40 bg-gold-400/15 text-gold-400',
@@ -66,6 +67,14 @@ export function Goods() {
     }
     return result;
   }, [products, activeCat, search, sort]);
+
+  useSeo({
+    title: 'Synf Goods — Merch, Tees, Stickers & Limited Drops',
+    description: `Shop Synf Goods — ${products.length} products including tees, stickers, posters and limited drops from Team Synf. Wear the collective.`,
+    path: '/goods',
+    keywords: ['Synf Goods', 'Team Synf merch', 'Hyderabad merchandise', 'event merch India', 'student collective merch', 'limited drops India', 'party merch', 'DJ merch Hyderabad'],
+    jsonLd: collectionPageJsonLd('Synf Goods', '/goods', products.length),
+  });
 
   return (
     <div className="bg-ink-950 min-h-screen">
@@ -288,6 +297,23 @@ export function GoodsProductDetail() {
   const variants = product.variants || [];
   const availabilityStyle = AVAILABILITY_STYLES[product.availability_status] || AVAILABILITY_STYLES.coming_soon;
   const availabilityLabel = GOODS_AVAILABILITY_LABELS[product.availability_status as keyof typeof GOODS_AVAILABILITY_LABELS] || product.availability_status;
+
+  useSeo({
+    title: `${product.name} — Synf Goods`,
+    description: product.description || `${product.name} from Synf Goods. ${availabilityLabel}. ${product.price != null ? `₹${product.price.toLocaleString('en-IN')}` : 'Price on release'}.`,
+    path: `/goods/${product.slug}`,
+    image: images[0]?.url,
+    type: 'article',
+    keywords: [product.name, 'Synf Goods', 'Team Synf merch', product.category?.name || '', 'Hyderabad merch', 'limited drops'],
+    jsonLd: [
+      productJsonLd(product),
+      breadcrumbJsonLd([
+        { name: 'Home', path: '/' },
+        { name: 'Goods', path: '/goods' },
+        { name: product.name, path: `/goods/${product.slug}` },
+      ]),
+    ],
+  });
 
   return (
     <div className="bg-ink-950 min-h-screen">

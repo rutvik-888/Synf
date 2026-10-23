@@ -6,6 +6,8 @@ import type { JobPostingRow } from '@/lib/types';
 import { JOB_ARRANGEMENT_LABELS } from '@/lib/types';
 import { Reveal } from '@/components/Reveal';
 import { formatDate } from '@/lib/format';
+import { useSeo, collectionPageJsonLd } from '@/lib/seo';
+import { jobPostingJsonLd } from '@/lib/seo';
 
 export function Jobs() {
   const [jobs, setJobs] = useState<JobPostingRow[]>([]);
@@ -26,6 +28,17 @@ export function Jobs() {
       setLoading(false);
     })();
   }, []);
+
+  useSeo({
+    title: 'Join Team Synf — Open Roles & Student Jobs in Hyderabad',
+    description: `Browse ${jobs.length} open roles at Team Synf. Students and creatives who want to help build nights that matter — DJs, photographers, designers, promoters and more in Hyderabad.`,
+    path: '/jobs',
+    keywords: ['Team Synf jobs', 'student jobs Hyderabad', 'DJ jobs Hyderabad', 'event jobs India', 'creative jobs Hyderabad', 'part time student jobs', 'event photographer jobs', 'party promoter jobs'],
+    jsonLd: [
+      collectionPageJsonLd('Open Roles at Team Synf', '/jobs', jobs.length),
+      ...jobs.slice(0, 10).map(j => jobPostingJsonLd({ ...j, posted_at: j.created_at })),
+    ],
+  });
 
   return (
     <div className="bg-ink-950">

@@ -8,6 +8,12 @@ export type LaunchConfig = {
   subheadline: string;
   background_theme: string;
   show_email_signup: boolean;
+  bg_image_url: string | null;
+  accent_color: string;
+  reveal_animation: 'burst' | 'fade' | 'slide' | 'zoom';
+  show_details: boolean;
+  detail_text: string;
+  social_links: { instagram?: string; x?: string; youtube?: string } | null;
 };
 
 const DEFAULT: LaunchConfig = {
@@ -17,6 +23,12 @@ const DEFAULT: LaunchConfig = {
   subheadline: 'Team Synf — We don\u2019t do ordinary.',
   background_theme: 'synf',
   show_email_signup: true,
+  bg_image_url: null,
+  accent_color: '#ff2d6f',
+  reveal_animation: 'burst',
+  show_details: false,
+  detail_text: '',
+  social_links: null,
 };
 
 let cached: LaunchConfig | null = null;

@@ -5,6 +5,7 @@ import { Reveal } from '@/components/Reveal';
 import { Sparkles, Flame, ArrowRight, ArrowUpRight, Calendar, Users, Zap, Volume2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PersonCard } from '@/components/PersonCard';
+import { useSeo, organizationJsonLd } from '@/lib/seo';
 
 const MANIFESTO = [
   { n: '01', text: 'We believe experiences should be felt, not just attended.', color: 'text-synf-400' },
@@ -35,6 +36,14 @@ export function About() {
 
   const body = content?.body || 'Team Synf is a student-led collective creating parties, nightlife and curated music experiences. We exist to throw the kind of nights we wish existed — bold, creative and culturally rooted.';
   const tagline = content?.data && (content.data as { tagline?: string }).tagline || 'Student-led. Collaborative. Creative.';
+
+  useSeo({
+    title: 'About Team Synf — Student-Led Creative Collective in Hyderabad',
+    description: 'Team Synf is a student-led collective creating parties, nightlife and curated music experiences in Hyderabad. We exist to throw the kind of nights we wish existed — bold, creative and culturally rooted.',
+    path: '/about',
+    keywords: ['about Team Synf', 'student collective Hyderabad', 'creative collective India', 'nightlife collective', 'event organizers Hyderabad', 'DJ collective', 'party organizers Hyderabad'],
+    jsonLd: organizationJsonLd(),
+  });
 
   return (
     <div className="bg-ink-950">

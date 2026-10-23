@@ -3,7 +3,8 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import type { SiteContentRow, RecruitmentFormRow, FormField } from '@/lib/types';
 import { applyFavicon } from '@/lib/favicon';
-import { Save, Plus, Trash2, FileText, Upload, Image as ImageIcon, Check } from 'lucide-react';
+import { Save, Plus, Trash2, FileText, Upload, Image as ImageIcon, Check, MessageSquare, Sparkles } from 'lucide-react';
+import { FormBuilder } from '@/components/FormBuilder';
 
 const PAGES = [
   { slug: 'home_hero', title: 'Homepage hero', desc: 'Headline & subhead on the homepage.' },
@@ -263,6 +264,32 @@ export function AdminContent() {
           {saved && <span className="text-sm text-acid-400">Published — new version is live</span>}
         </div>
         <p className="text-xs text-ink-500">Publishing creates a new version. Existing applications keep their original form snapshot so they stay readable.</p>
+      </section>
+
+      {/* Contact form builder */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <MessageSquare size={18} className="text-synf-400" />
+          <h2 className="font-display text-xl font-extrabold">Contact Form</h2>
+        </div>
+        <FormBuilder
+          formKey="contact"
+          title="Contact"
+          description="Customize the fields visitors see on the Contact page. Add, remove, or reorder fields — changes go live when you publish."
+        />
+      </section>
+
+      {/* Collaboration form builder */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Sparkles size={18} className="text-synf-400" />
+          <h2 className="font-display text-xl font-extrabold">Collaboration Form</h2>
+        </div>
+        <FormBuilder
+          formKey="collaboration"
+          title="Collaborate"
+          description="Customize the fields on the Collaborate page. Tailor what you ask from brands, venues, DJs, and creative partners."
+        />
       </section>
     </div>
   );

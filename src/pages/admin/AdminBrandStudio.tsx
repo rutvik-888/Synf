@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import type { BrandThemeRow } from '@/lib/platform-types';
 import type { LaunchConfig } from '@/lib/launchConfig';
 import { fetchLaunchConfig } from '@/lib/launchConfig';
-import { Palette, Check, Sparkles, Rocket, Save, Eye, EyeOff } from 'lucide-react';
+import { Palette, Check, Sparkles, Rocket, Save, Eye, EyeOff, Image as ImageIcon } from 'lucide-react';
 
 const DEFAULT_LAUNCH: LaunchConfig = {
   enabled: false,
@@ -12,6 +12,12 @@ const DEFAULT_LAUNCH: LaunchConfig = {
   subheadline: 'Team Synf — We don\u2019t do ordinary.',
   background_theme: 'synf',
   show_email_signup: true,
+  bg_image_url: null,
+  accent_color: '#ff2d6f',
+  reveal_animation: 'burst',
+  show_details: false,
+  detail_text: '',
+  social_links: null,
 };
 
 export function AdminBrandStudio() {
@@ -149,6 +155,93 @@ export function AdminBrandStudio() {
               <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all ${launch.show_email_signup ? 'left-6' : 'left-1'}`} />
             </button>
           </label>
+
+          {/* Background image URL */}
+          <div>
+            <label className="label">Background image URL (optional)</label>
+            <input
+              type="url"
+              value={launch.bg_image_url || ''}
+              onChange={e => setLaunch(v => ({ ...v, bg_image_url: e.target.value || null }))}
+              className="input"
+              placeholder="https://… (leave empty for aurora gradient)"
+            />
+            <p className="mt-1.5 text-xs text-white/40">If set, the countdown page shows this image as a darkened backdrop instead of the animated aurora.</p>
+          </div>
+
+          {/* Accent color */}
+          <div>
+            <label className="label">Accent color</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={launch.accent_color || '#ff2d6f'}
+                onChange={e => setLaunch(v => ({ ...v, accent_color: e.target.value }))}
+                className="h-10 w-14 cursor-pointer rounded-lg border border-white/10 bg-transparent"
+              />
+              <input
+                type="text"
+                value={launch.accent_color || '#ff2d6f'}
+                onChange={e => setLaunch(v => ({ ...v, accent_color: e.target.value }))}
+                className="input flex-1"
+                placeholder="#ff2d6f"
+              />
+            </div>
+            <p className="mt-1.5 text-xs text-white/40">Controls the glow color behind the countdown and the eyebrow text.</p>
+          </div>
+
+          {/* Reveal animation */}
+          <div>
+            <label className="label">Launch reveal animation</label>
+            <select
+              value={launch.reveal_animation || 'burst'}
+              onChange={e => setLaunch(v => ({ ...v, reveal_animation: e.target.value as LaunchConfig['reveal_animation'] }))}
+              className="input"
+            >
+              <option value="burst">Burst (scale + blur)</option>
+              <option value="fade">Fade in</option>
+              <option value="slide">Slide up</option>
+              <option value="zoom">Zoom in</option>
+            </select>
+            <p className="mt-1.5 text-xs text-white/40">Animation played when the countdown hits zero and the site goes live.</p>
+          </div>
+
+          {/* Show details toggle */}
+          <label className="flex items-center justify-between rounded-lg border border-white/10 bg-ink-900/50 px-4 py-3">
+            <div>
+              <div className="text-sm font-semibold text-white">Show extra detail text</div>
+              <div className="text-xs text-white/40">Display a short line of extra info below the subheadline</div>
+            </div>
+            <button
+              onClick={() => setLaunch(v => ({ ...v, show_details: !v.show_details }))}
+              className={`relative h-7 w-12 rounded-full transition-colors ${launch.show_details ? 'bg-synf-500' : 'bg-white/15'}`}
+            >
+              <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all ${launch.show_details ? 'left-6' : 'left-1'}`} />
+            </button>
+          </label>
+          {launch.show_details && (
+            <div>
+              <label className="label">Detail text</label>
+              <input
+                type="text"
+                value={launch.detail_text || ''}
+                onChange={e => setLaunch(v => ({ ...v, detail_text: e.target.value }))}
+                className="input"
+                placeholder="e.g. Hyderabad · 2026 · We don't do ordinary"
+              />
+            </div>
+          )}
+
+          {/* Social links */}
+          <div>
+            <label className="label">Social links (optional)</label>
+            <p className="mb-2 text-xs text-white/40">Show social icons on the countdown page.</p>
+            <div className="grid gap-2 sm:grid-cols-3">
+              <input className="input" placeholder="Instagram URL" value={launch.social_links?.instagram || ''} onChange={e => setLaunch(v => ({ ...v, social_links: { ...v.social_links, instagram: e.target.value || undefined } }))} />
+              <input className="input" placeholder="X / Twitter URL" value={launch.social_links?.x || ''} onChange={e => setLaunch(v => ({ ...v, social_links: { ...v.social_links, x: e.target.value || undefined } }))} />
+              <input className="input" placeholder="YouTube URL" value={launch.social_links?.youtube || ''} onChange={e => setLaunch(v => ({ ...v, social_links: { ...v.social_links, youtube: e.target.value || undefined } }))} />
+            </div>
+          </div>
 
           {/* Save button */}
           <div className="flex items-center gap-3">

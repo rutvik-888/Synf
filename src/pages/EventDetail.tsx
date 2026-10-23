@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Calendar, MapPin, Music2, Ticket, ExternalLink, ArrowLeft, Share2, Instagram, Users, Film, Sparkles, Play, X, ChevronLeft, ChevronRight, HelpCircle, ChevronDown, Heart } from 'lucide-react';
+import { Calendar, MapPin, Music2, Ticket, ExternalLink, ArrowLeft, Share2, Instagram, Users, Film, Sparkles, Play, X, ChevronLeft, ChevronRight, HelpCircle, ChevronDown, Heart, CalendarPlus } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { EventRow, EventMediaRow, EventCreditRow, EventRow as Ev } from '@/lib/types';
 import type { EventFaqRow } from '@/lib/platform-types';
@@ -8,6 +8,7 @@ import { formatDate, formatTime, countdown } from '@/lib/format';
 import { resolveTicketing } from '@/lib/ticketing';
 import { Reveal } from '@/components/Reveal';
 import { EventCard } from '@/components/EventCard';
+import { useSeo, eventJsonLd, breadcrumbJsonLd } from '@/lib/seo';
 
 export function EventDetail() {
   const { slug } = useParams();
@@ -85,6 +86,36 @@ export function EventDetail() {
       alert('Link copied to clipboard');
     }
   }
+
+  function getCalendarUrl(ev: EventRow): string {
+    const start = ev.start_at ? new Date(ev.start_at) : null;
+    const end = ev.end_at ? new Date(ev.end_at) : (start ? new Date(start.getTime() + 3 * 3600000) : null);
+    if (!start || !end) return '';
+    const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    const title = encodeURIComponent(ev.title);
+    const desc = encodeURIComponent(ev.subtitle || ev.description || 'Join us for an unforgettable night with Team Synf.');
+    const loc = encodeURIComponent([ev.venue_name, ev.venue_city].filter(Boolean).join(', '));
+    return `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${fmt(start)}/${fmt(end)}&details=${desc}&location=${loc}`;
+  }
+
+  useSeo({
+    title: event.title,
+    description: event.subtitle || event.description || `Team Synf presents ${event.title}${event.venue_city ? ` in ${event.venue_city}` : ''}${event.start_at ? ` on ${formatDate(event.start_at, { day: 'numeric', month: 'long', year: 'numeric' })}` : ''}.`,
+    path: `/events/${event.slug}`,
+    image: event.cover_image_url || undefined,
+    type: 'music.event',
+    publishedTime: event.published_at || undefined,
+    modifiedTime: event.updated_at || undefined,
+    keywords: [event.title, 'Team Synf', 'Hyderabad events', event.venue_city || 'Hyderabad', ...(event.music_genres || []), 'DJ night', 'party', 'nightlife'].filter(Boolean),
+    jsonLd: [
+      eventJsonLd({ ...event, credits: credits.map(c => ({ name: c.name, role: c.role })) }),
+      breadcrumbJsonLd([
+        { name: 'Home', path: '/' },
+        { name: 'Events', path: '/events' },
+        { name: event.title, path: `/events/${event.slug}` },
+      ]),
+    ],
+  });
 
   return (
     <article className="bg-ink-950">
@@ -284,6 +315,7 @@ export function EventDetail() {
             </div>
 
             <button onClick={share} className="btn-ghost w-full group"><Share2 size={16} /> Share event</button>
+            {event.start_at && <a href={getCalendarUrl(event)} target="_blank" rel="noopener noreferrer" className="btn-ghost w-full group"><CalendarPlus size={16} /> Add to calendar</a>}
             <a href="https://www.instagram.com/team.synf/" target="_blank" rel="noopener noreferrer" className="btn-ghost w-full group"><Instagram size={16} /> @team.synf</a>
           </div>
         </aside>

@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Plus, Trash2, Users, Search, Star, LayoutGrid, List, GripVertical } from 'lucide-react';
+import { Plus, Trash2, Users, Search, Star, LayoutGrid, List, GripVertical, Download, Activity, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import type { PersonRow, DepartmentRow } from '@/lib/types';
@@ -27,6 +27,7 @@ export function AdminPeople() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [activityCounts, setActivityCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!isStaff) return;
@@ -38,6 +39,12 @@ export function AdminPeople() {
       const { data: peopleData } = await supabase.from('people').select('*').order('sort_order');
       setItems((peopleData as PersonRow[]) || []);
       setLoading(false);
+
+      // Load activity counts for people (how many events each person is related to)
+      const { data: logData } = await supabase.from('activity_log').select('target_id').eq('target_type', 'people');
+      const counts: Record<string, number> = {};
+      (logData || []).forEach(l => { if (l.target_id) counts[l.target_id] = (counts[l.target_id] || 0) + 1; });
+      setActivityCounts(counts);
     })();
   }, [isStaff]);
 
@@ -118,6 +125,30 @@ export function AdminPeople() {
   const isEditing = !!sel;
   const colors = ROLE_COLORS.admin;
 
+  const profileCompletion = (p: PersonRow): number => {
+    const fields = ['name', 'role', 'bio', 'portrait_url', 'instagram_url', 'category'];
+    const filled = fields.filter(f => {
+      const v = p[f as keyof PersonRow];
+      return v !== null && v !== undefined && v !== '';
+    });
+    return Math.round((filled.length / fields.length) * 100);
+  };
+
+  function exportCSV() {
+    const headers = ['Name', 'Role', 'Category', 'Bio', 'Instagram', 'Status', 'Featured'];
+    const rows = filtered.map(p => [
+      p.name, p.role || '', p.category ? deptName(p.category) : '', (p.bio || '').replace(/,/g, ';'), p.instagram_url || '', p.status, p.featured ? 'Yes' : 'No',
+    ]);
+    const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'people-directory.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   const newPerson = (): PersonRow => ({
     id: '', slug: '', name: '', role: '', category: null, secondary_category: null,
     bio: '', portrait_url: '', portrait_alt: '', instagram_url: '',
@@ -129,6 +160,7 @@ export function AdminPeople() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div><h1 className="font-display text-3xl font-extrabold tracking-tight">The Collective</h1><p className="text-white/50">Public profiles shown on the website. Drag cards to reorder how they appear publicly.</p></div>
         <button onClick={() => setSel(newPerson())} className="btn-primary"><Plus size={16} /> Add person</button>
+        <button onClick={exportCSV} className="btn-ghost"><Download size={16} /> Export CSV</button>
       </div>
 
       {/* Toolbar */}
@@ -193,6 +225,14 @@ export function AdminPeople() {
                       <span className={`chip border ${p.status === 'approved' ? 'border-acid-400/30 bg-acid-400/15 text-acid-400' : 'border-white/10 text-white/50'}`}>{p.status.replace('_', ' ')}</span>
                       {p.instagram_url && <span className="chip border border-white/10 text-white/40">IG</span>}
                     </div>
+                    {/* Profile completion */}
+                    <div className="mt-3 flex items-center gap-2">
+                      <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/5">
+                        <div className={`h-full rounded-full ${profileCompletion(p) >= 80 ? 'bg-acid-400' : profileCompletion(p) >= 50 ? 'bg-gold-400' : 'bg-synf-500'}`} style={{ width: `${profileCompletion(p)}%` }} />
+                      </div>
+                      <span className="text-[10px] text-white/40">{profileCompletion(p)}%</span>
+                      {(activityCounts[p.id] || 0) > 0 && <span className="flex items-center gap-0.5 text-[10px] text-white/30"><Activity size={9} /> {activityCounts[p.id]}</span>}
+                    </div>
                   </button>
                 );
               })}
@@ -226,6 +266,15 @@ export function AdminPeople() {
         {isEditing && sel && (
           <div className="card space-y-3 p-5">
             <div className="flex items-center justify-between"><h2 className="font-display text-lg font-extrabold">{sel.id ? 'Edit' : 'New'} profile</h2>{sel.id && <button onClick={() => del(sel.id)} className="btn-ghost text-synf-400"><Trash2 size={14} /></button>}</div>
+            {sel.id && (
+              <div className="flex items-center gap-2 rounded-lg border border-white/5 bg-ink-900/50 px-3 py-2">
+                <CheckCircle2 size={14} className={profileCompletion(sel) >= 80 ? 'text-acid-400' : 'text-gold-400'} />
+                <span className="text-xs text-white/50">Profile {profileCompletion(sel)}% complete</span>
+                <div className="ml-auto h-1 w-20 overflow-hidden rounded-full bg-white/5">
+                  <div className={`h-full rounded-full ${profileCompletion(sel) >= 80 ? 'bg-acid-400' : 'bg-gold-400'}`} style={{ width: `${profileCompletion(sel)}%` }} />
+                </div>
+              </div>
+            )}
             <div><label className="label">Name *</label><input className="input" value={sel.name} onChange={e => setSel({ ...sel, name: e.target.value, slug: sel.id ? sel.slug : slugify(e.target.value) })} /></div>
             <div><label className="label">Slug</label><input className="input" value={sel.slug} onChange={e => setSel({ ...sel, slug: e.target.value })} /></div>
             <div className="grid gap-3 sm:grid-cols-2">

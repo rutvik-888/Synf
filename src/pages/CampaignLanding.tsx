@@ -3,14 +3,16 @@ import { Link, useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import type { CampaignRow, CampaignSectionRow } from '@/lib/platform-types';
 import { Reveal } from '@/components/Reveal';
-import { ArrowRight, ArrowLeft, Sparkles, Flame, Calendar } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Sparkles, Flame, Calendar, Share2, Instagram, Twitter, Facebook, Copy, Check } from 'lucide-react';
 import { countdown, formatDate } from '@/lib/format';
+import { useSeo, organizationJsonLd } from '@/lib/seo';
 
 export function CampaignLanding() {
   const { slug } = useParams<{ slug: string }>();
   const [campaign, setCampaign] = useState<CampaignRow | null>(null);
   const [sections, setSections] = useState<CampaignSectionRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -24,6 +26,15 @@ export function CampaignLanding() {
     })();
   }, [slug]);
 
+  async function copyLink() {
+    await navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  const shareUrl = encodeURIComponent(window.location.href);
+  const shareText = encodeURIComponent(campaign?.headline || campaign?.name || 'Check out this campaign');
+
   if (loading) return <div className="bg-ink-950 min-h-screen" />;
   if (!campaign) return (
     <div className="bg-ink-950 grid min-h-screen place-items-center">
@@ -36,6 +47,16 @@ export function CampaignLanding() {
   );
 
   const cd = campaign.start_date ? countdown(campaign.start_date) : null;
+
+  useSeo({
+    title: `${campaign.headline || campaign.name} — Team Synf Campaign`,
+    description: campaign.subheadline || campaign.description || `${campaign.name} — a Team Synf campaign. Student-led creative collective in Hyderabad.`,
+    path: `/campaigns/${campaign.slug}`,
+    image: campaign.cover_image_url || undefined,
+    type: 'article',
+    keywords: [campaign.name, 'Team Synf', 'Hyderabad campaign', ...(campaign.tags || []), 'student collective', 'event campaign'],
+    jsonLd: organizationJsonLd(),
+  });
 
   return (
     <div className="bg-ink-950 min-h-screen">
@@ -70,6 +91,17 @@ export function CampaignLanding() {
           {campaign.cta_label && campaign.cta_url && (
             <div className="mt-8"><a href={campaign.cta_url} target="_blank" rel="noopener noreferrer" className="btn-primary btn-lg group">{campaign.cta_label} <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" /></a></div>
           )}
+
+          {/* Social sharing */}
+          <div className="mt-10 flex items-center gap-3">
+            <span className="font-mono text-xs uppercase tracking-widest text-white/40">Share</span>
+            <div className="flex items-center gap-2">
+              <a href={`https://www.instagram.com/`} target="_blank" rel="noopener noreferrer" className="grid h-10 w-10 place-items-center rounded-full border border-white/15 bg-ink-900/60 text-white/70 transition-all hover:border-synf-500/40 hover:text-synf-400" aria-label="Share on Instagram"><Instagram size={16} /></a>
+              <a href={`https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareText}`} target="_blank" rel="noopener noreferrer" className="grid h-10 w-10 place-items-center rounded-full border border-white/15 bg-ink-900/60 text-white/70 transition-all hover:border-synf-500/40 hover:text-synf-400" aria-label="Share on X"><Twitter size={16} /></a>
+              <a href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`} target="_blank" rel="noopener noreferrer" className="grid h-10 w-10 place-items-center rounded-full border border-white/15 bg-ink-900/60 text-white/70 transition-all hover:border-synf-500/40 hover:text-synf-400" aria-label="Share on Facebook"><Facebook size={16} /></a>
+              <button onClick={copyLink} className="grid h-10 w-10 place-items-center rounded-full border border-white/15 bg-ink-900/60 text-white/70 transition-all hover:border-synf-500/40 hover:text-synf-400" aria-label="Copy link">{copied ? <Check size={16} className="text-acid-400" /> : <Copy size={16} />}</button>
+            </div>
+          </div>
         </div>
       </section>
 

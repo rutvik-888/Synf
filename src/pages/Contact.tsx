@@ -2,9 +2,14 @@ import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Instagram, Send, Check, AlertCircle, ArrowRight, Sparkles, Calendar, Handshake, Newspaper, Briefcase, Lightbulb, MessageSquare, ChevronDown, Loader2 } from 'lucide-react';
 import { Reveal } from '@/components/Reveal';
+import { DynamicFormFields, validateFormFields, useFormFields } from '@/components/DynamicFormFields';
 import { submitPublicForm } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
+import { useFormDefinition } from '@/lib/useFormDefinition';
 import type { EnquiryCategoryRow, SiteContentRow } from '@/lib/types';
+import { useSeo, organizationJsonLd } from '@/lib/seo';
+
+const DRAFT_KEY = 'synf_contact_draft';
 
 const CATEGORY_ICONS: Record<string, typeof Mail> = {
   MessageSquare: MessageSquare,
@@ -17,17 +22,17 @@ const CATEGORY_ICONS: Record<string, typeof Mail> = {
 };
 
 export function Contact() {
+  const { formDef, loading: formLoading } = useFormDefinition('contact');
   const [categories, setCategories] = useState<EnquiryCategoryRow[]>([]);
   const [settings, setSettings] = useState<Record<string, unknown> | null>(null);
-  const [form, setForm] = useState({
-    full_name: '', email: '', phone: '', organization: '', category_id: '', category: '',
-    subject: '', message: '', links: '', preferred_contact_method: 'email', company_website: '',
-  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle');
   const [err, setErr] = useState('');
   const [refNum, setRefNum] = useState('');
+  const [showDraftRestored, setShowDraftRestored] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
+
+  const [values, setFieldValue, resetValues] = useFormFields(formDef?.fields || []);
 
   useEffect(() => {
     (async () => {
@@ -40,32 +45,39 @@ export function Contact() {
     })();
   }, []);
 
+  // Auto-save draft
+  useEffect(() => {
+    if (status === 'ok' || !formDef) return;
+    const hasContent = Object.values(values).some(v => v && String(v).trim());
+    if (hasContent) localStorage.setItem(DRAFT_KEY, JSON.stringify(values));
+  }, [values, formDef, status]);
+
+  // Restore draft
+  useEffect(() => {
+    if (!formDef || formLoading) return;
+    const saved = localStorage.getItem(DRAFT_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        Object.entries(parsed).forEach(([k, v]) => setFieldValue(k, v as string));
+        setShowDraftRestored(true);
+      } catch { /* ignore */ }
+    }
+  }, [formDef, formLoading]);
+
   const heroHeading = (settings?.hero_heading as string) || "Let's Start a Conversation.";
   const heroSubheading = (settings?.hero_subheading as string) || 'Questions, press, partnerships, feedback — whatever it is, we\'re listening. Reach out and let\'s see where it goes.';
   const publicEmail = (settings?.public_email as string) || 'synf.c@com.gh';
   const showPublicEmail = settings?.show_public_email !== false;
-  const showPhoneField = settings?.show_phone_field !== false;
-  const showOrgField = settings?.show_organization_field !== false;
-  const showLinksField = settings?.show_links_field !== false;
-  const showPreferredContact = settings?.show_preferred_contact !== false;
-  const successMsg = (settings?.success_message as string) || 'Your message has been received. Our team will review it and reach out if a response is needed.';
+  const successMsg = formDef?.success_message || (settings?.success_message as string) || 'Your message has been received. Our team will review it and reach out if a response is needed.';
 
-  const set = (k: string, v: string) => { setForm(f => ({ ...f, [k]: v })); setErrors(e => ({ ...e, [k]: '' })); };
-
-  function validate(): boolean {
-    const e: Record<string, string> = {};
-    if (!form.full_name.trim()) e.full_name = 'Your name is required';
-    if (!form.email.trim()) e.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Please enter a valid email';
-    if (!form.category_id) e.category_id = 'Please select a category';
-    if (!form.subject.trim()) e.subject = 'Subject is required';
-    if (!form.message.trim()) e.message = 'Message is required';
-    else if (form.message.trim().length < 10) e.message = 'Message is too short (min 10 characters)';
-    if (form.phone && !/^[+]?[\d\s()-]{6,20}$/.test(form.phone)) e.phone = 'Invalid phone format';
-    if (form.links && !/^https?:\/\/.+/i.test(form.links)) e.links = 'Must start with http:// or https://';
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  }
+  useSeo({
+    title: 'Contact Team Synf — Enquiries, Press & Partnerships',
+    description: 'Get in touch with Team Synf. General enquiries, event questions, brand partnerships, media & press, careers and feedback. We read every message.',
+    path: '/contact',
+    keywords: ['contact Team Synf', 'Team Synf email', 'Hyderabad event contact', 'brand partnership Hyderabad', 'event sponsorship India', 'press contact Team Synf', 'event enquiry Hyderabad'],
+    jsonLd: organizationJsonLd(),
+  });
 
   function scrollToForm() {
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -73,33 +85,53 @@ export function Contact() {
 
   function selectCategory(catId: string) {
     const cat = categories.find(c => c.id === catId);
-    if (cat) { set('category_id', cat.id); set('category', cat.display_name); }
+    if (cat) {
+      const categoryField = formDef?.fields.find(f => f.id === 'f_category');
+      if (categoryField) setFieldValue('f_category', cat.display_name);
+    }
     scrollToForm();
   }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (status === 'loading') return;
-    if (!validate()) return;
+    if (!formDef) return;
+
+    const fieldErrors = validateFormFields(formDef.fields, values);
+    setErrors(fieldErrors);
+    if (Object.keys(fieldErrors).length > 0) return;
+
     setStatus('loading'); setErr('');
-    const r = await submitPublicForm({
+
+    const payload: Record<string, unknown> = {
       kind: 'enquiry',
-      full_name: form.full_name, email: form.email, phone: form.phone || undefined,
-      organization: form.organization || undefined, category_id: form.category_id, category: form.category,
-      subject: form.subject, message: form.message, links: form.links || undefined,
-      preferred_contact_method: form.preferred_contact_method,
-      consent_text: 'I agree to be contacted regarding my enquiry. My data will be stored and used per the Privacy Policy.',
-      company_website: form.company_website,
-    });
+      form_key: 'contact',
+      form_fields: formDef.fields,
+      consent_text: formDef.consent_text,
+      company_website: '',
+    };
+    for (const field of formDef.fields) {
+      payload[field.id] = values[field.id] || '';
+      if (field.id === 'f_name') payload.full_name = values[field.id] || '';
+      if (field.id === 'f_email') payload.email = values[field.id] || '';
+      if (field.id === 'f_phone') payload.phone = values[field.id] || '';
+      if (field.id === 'f_org') payload.organization = values[field.id] || '';
+      if (field.id === 'f_subject') payload.subject = values[field.id] || '';
+      if (field.id === 'f_message') payload.message = values[field.id] || '';
+      if (field.id === 'f_links') payload.links = values[field.id] || '';
+      if (field.id === 'f_category') payload.category = values[field.id] || '';
+    }
+
+    const r = await submitPublicForm(payload);
     if (r.error) { setStatus('err'); setErr(r.error); }
     else {
       setStatus('ok');
       setRefNum(r.reference_number || '');
-      setForm({ full_name: '', email: '', phone: '', organization: '', category_id: '', category: '', subject: '', message: '', links: '', preferred_contact_method: 'email', company_website: '' });
+      resetValues();
+      localStorage.removeItem(DRAFT_KEY);
     }
   }
 
-  // Contact cards configuration
   const contactCards = [
     { catSlug: 'general', icon: MessageSquare, title: 'General Enquiries', desc: 'Questions, information, or just want to say hi.', action: 'form' },
     { catSlug: 'event', icon: Calendar, title: 'Events & Experiences', desc: 'Ticketing, event details, or hosting enquiries.', action: 'form' },
@@ -198,7 +230,7 @@ export function Contact() {
 
           {/* Form / Success */}
           <div className="lg:col-span-2">
-            {status === 'idle' && <div className="mb-5 flex items-center justify-between"><div><div className="section-eyebrow mb-1"><Send size={14} /> Your message</div><p className="text-sm text-white/50">We read every note. Make it a good one.</p></div><span className="font-mono text-xs text-white/30">01—04</span></div>}
+            {status === 'idle' && !formLoading && formDef && <div className="mb-5 flex items-center justify-between"><div><div className="section-eyebrow mb-1"><Send size={14} /> Your message</div><p className="text-sm text-white/50">{formDef.intro || 'We read every note. Make it a good one.'}</p></div><span className="font-mono text-xs text-white/30">{formDef.fields.length} fields</span></div>}
             {status === 'ok' ? (
               <div className="card flex flex-col items-center justify-center p-8 text-center sm:p-12">
                 <div className="grid h-16 w-16 place-items-center rounded-full bg-acid-400/15 text-acid-400 animate-scale-in"><Check size={32} /></div>
@@ -212,85 +244,21 @@ export function Contact() {
                   <button onClick={() => { setStatus('idle'); setRefNum(''); }} className="btn-ghost">Send another</button>
                 </div>
               </div>
-            ) : (
+            ) : formLoading ? (
+              <div className="card flex items-center justify-center p-12"><Loader2 size={24} className="animate-spin text-synf-400" /></div>
+            ) : formDef ? (
               <form onSubmit={submit} className="card relative space-y-4 overflow-hidden p-6 backdrop-blur-sm sm:p-8" noValidate>
                 <div className="pointer-events-none absolute -right-24 -top-24 h-48 w-48 rounded-full bg-acid-400/10 blur-3xl" />
+                {showDraftRestored && <div className="flex items-center justify-between rounded-lg border border-gold-400/20 bg-gold-400/5 px-3 py-2 text-xs text-gold-400"><span>Restored your unsaved draft from a previous visit.</span><button type="button" onClick={() => { localStorage.removeItem(DRAFT_KEY); resetValues(); setShowDraftRestored(false); }} className="underline hover:no-underline">Clear</button></div>}
                 {/* Honeypot */}
-                <div className="hidden" aria-hidden="true"><label>Company<input value={form.company_website} onChange={e => set('company_website', e.target.value)} tabIndex={-1} autoComplete="off" /></label></div>
+                <div className="hidden" aria-hidden="true"><label>Company<input value={(values as Record<string, string>).company_website || ''} onChange={e => setFieldValue('company_website', e.target.value)} tabIndex={-1} autoComplete="off" /></label></div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="label">Full name *</label>
-                    <input className="input" value={form.full_name} onChange={e => set('full_name', e.target.value)} aria-invalid={!!errors.full_name} />
-                    {errors.full_name && <p className="mt-1 text-xs text-synf-400">{errors.full_name}</p>}
-                  </div>
-                  <div>
-                    <label className="label">Email address *</label>
-                    <input className="input" type="email" value={form.email} onChange={e => set('email', e.target.value)} aria-invalid={!!errors.email} />
-                    {errors.email && <p className="mt-1 text-xs text-synf-400">{errors.email}</p>}
-                  </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="label">Enquiry category *</label>
-                    <select className="input" value={form.category_id} onChange={e => { const cat = categories.find(c => c.id === e.target.value); setForm(f => ({ ...f, category_id: e.target.value, category: cat?.display_name || '' })); setErrors(er => ({ ...er, category_id: '' })); }} aria-invalid={!!errors.category_id}>
-                      <option value="">Select a category…</option>
-                      {categories.map(c => <option key={c.id} value={c.id}>{c.display_name}</option>)}
-                    </select>
-                    {errors.category_id && <p className="mt-1 text-xs text-synf-400">{errors.category_id}</p>}
-                  </div>
-                  <div>
-                    <label className="label">Subject *</label>
-                    <input className="input" value={form.subject} onChange={e => set('subject', e.target.value)} placeholder="Brief summary" aria-invalid={!!errors.subject} />
-                    {errors.subject && <p className="mt-1 text-xs text-synf-400">{errors.subject}</p>}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="label">Message *</label>
-                  <textarea className="input min-h-[140px]" value={form.message} onChange={e => set('message', e.target.value)} placeholder="Tell us what's on your mind…" aria-invalid={!!errors.message} />
-                  {errors.message && <p className="mt-1 text-xs text-synf-400">{errors.message}</p>}
-                </div>
-
-                {(showPhoneField || showOrgField) && (
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {showPhoneField && (
-                      <div>
-                        <label className="label">Phone <span className="text-ink-500">(optional)</span></label>
-                        <input className="input" value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+91…" aria-invalid={!!errors.phone} />
-                        {errors.phone && <p className="mt-1 text-xs text-synf-400">{errors.phone}</p>}
-                      </div>
-                    )}
-                    {showOrgField && (
-                      <div>
-                        <label className="label">Organization / Brand / College <span className="text-ink-500">(optional)</span></label>
-                        <input className="input" value={form.organization} onChange={e => set('organization', e.target.value)} placeholder="If applicable" />
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {(showLinksField || showPreferredContact) && (
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {showLinksField && (
-                      <div>
-                        <label className="label">Website / Portfolio / Social <span className="text-ink-500">(optional)</span></label>
-                        <input className="input" value={form.links} onChange={e => set('links', e.target.value)} placeholder="https://…" aria-invalid={!!errors.links} />
-                        {errors.links && <p className="mt-1 text-xs text-synf-400">{errors.links}</p>}
-                      </div>
-                    )}
-                    {showPreferredContact && (
-                      <div>
-                        <label className="label">Preferred contact method</label>
-                        <select className="input" value={form.preferred_contact_method} onChange={e => set('preferred_contact_method', e.target.value)}>
-                          <option value="email">Email</option>
-                          <option value="phone">Phone</option>
-                        </select>
-                      </div>
-                    )}
-                  </div>
-                )}
+                <DynamicFormFields
+                  fields={formDef.fields}
+                  values={values}
+                  errors={errors}
+                  onChange={setFieldValue}
+                />
 
                 <p className="text-xs text-white/50">
                   By submitting, you agree to be contacted regarding your enquiry. Your data is stored and used per our{' '}
@@ -303,6 +271,8 @@ export function Contact() {
                   {status === 'loading' ? <><Loader2 size={16} className="animate-spin" /> Sending…</> : <><Send size={16} /> Send enquiry <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" /></>}
                 </button>
               </form>
+            ) : (
+              <div className="card p-8 text-center text-white/50">Contact form is being configured. Please check back soon.</div>
             )}
           </div>
         </div>

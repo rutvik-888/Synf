@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { ArrowRight, Check, Sparkles } from 'lucide-react';
+import { ArrowRight, Check, Sparkles, Instagram, Youtube, X as TwitterX } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { LaunchConfig } from '@/lib/launchConfig';
 
@@ -21,7 +21,7 @@ function calcTimeLeft(target: number): TimeLeft | null {
   };
 }
 
-function CountdownUnit({ value, label }: { value: number; label: string }) {
+function CountdownUnit({ value, label, accentColor }: { value: number; label: string; accentColor: string }) {
   const display = String(value).padStart(2, '0');
   return (
     <div className="flex flex-col items-center">
@@ -31,7 +31,7 @@ function CountdownUnit({ value, label }: { value: number; label: string }) {
             {display}
           </span>
         </div>
-        <div className="absolute inset-0 -z-10 blur-2xl bg-synf-500/20 rounded-full" />
+        <div className="absolute inset-0 -z-10 blur-2xl rounded-full" style={{ background: `${accentColor}33` }} />
       </div>
       <span className="mt-2 font-mono text-[10px] uppercase tracking-[0.3em] text-white/40 sm:text-xs">
         {label}
@@ -88,14 +88,16 @@ export function ComingSoon({ config, onLaunch }: { config: LaunchConfig; onLaunc
     let raf = 0;
     let t = 0;
 
+    const accent = config.accent_color || '#ff2d6f';
+    const accentRgb = hexToRgb(accent);
+
     function draw() {
       if (!ctx) return;
       t += 0.003;
       ctx.clearRect(0, 0, w, h);
 
-      // Three flowing aurora blobs
       const blobs = [
-        { cx: w * 0.3 + Math.sin(t) * 120, cy: h * 0.35 + Math.cos(t * 0.7) * 80, color: '255,45,111', r: Math.max(200, w * 0.35) },
+        { cx: w * 0.3 + Math.sin(t) * 120, cy: h * 0.35 + Math.cos(t * 0.7) * 80, color: accentRgb || '255,45,111', r: Math.max(200, w * 0.35) },
         { cx: w * 0.7 + Math.sin(t * 1.1) * 140, cy: h * 0.55 + Math.cos(t * 0.9) * 100, color: '168,85,247', r: Math.max(200, w * 0.3) },
         { cx: w * 0.5 + Math.sin(t * 0.8) * 100, cy: h * 0.7 + Math.cos(t * 1.3) * 60, color: '34,184,255', r: Math.max(180, w * 0.25) },
       ];
@@ -117,7 +119,7 @@ export function ComingSoon({ config, onLaunch }: { config: LaunchConfig; onLaunc
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', resize);
     };
-  }, []);
+  }, [config.accent_color]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,8 +130,18 @@ export function ComingSoon({ config, onLaunch }: { config: LaunchConfig; onLaunc
     setSubmitted(true);
   }, [email, submitting]);
 
+  const accentColor = config.accent_color || '#ff2d6f';
+  const revealAnim = config.reveal_animation || 'burst';
+
   // Launch moment overlay
   if (launched) {
+    const revealKeyframes: Record<string, string> = {
+      burst: `@keyframes launchReveal { 0% { opacity: 0; transform: scale(0.3) blur(20px); } 60% { opacity: 1; transform: scale(1.1) blur(0); } 100% { transform: scale(1); } }`,
+      fade: `@keyframes launchReveal { 0% { opacity: 0; } 100% { opacity: 1; } }`,
+      slide: `@keyframes launchReveal { 0% { opacity: 0; transform: translateY(60px); } 100% { opacity: 1; transform: translateY(0); } }`,
+      zoom: `@keyframes launchReveal { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }`,
+    };
+
     return (
       <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden bg-ink-950">
         <div className="grain pointer-events-none absolute inset-0 opacity-10" />
@@ -138,11 +150,11 @@ export function ComingSoon({ config, onLaunch }: { config: LaunchConfig; onLaunc
         {/* Expanding glow */}
         <div
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[120px] animate-pulse-slow"
-          style={{ width: '80rem', height: '80rem', background: 'radial-gradient(circle, rgba(255,45,111,0.3), rgba(168,85,247,0.15), transparent 70%)' }}
+          style={{ width: '80rem', height: '80rem', background: `radial-gradient(circle, ${accentColor}4D, rgba(168,85,247,0.15), transparent 70%)` }}
         />
 
         <div className="relative flex flex-col items-center" style={{ animation: 'launchReveal 1.5s cubic-bezier(0.2,0.8,0.2,1) both' }}>
-          <Sparkles size={48} className="text-synf-400 animate-pulse-slow" />
+          <Sparkles size={48} className="animate-pulse-slow" style={{ color: accentColor }} />
           <h1 className="mt-6 font-display text-[clamp(3rem,15vw,10rem)] font-extrabold leading-none tracking-tightest">
             <span className="bg-gradient-to-r from-synf-400 via-white to-acid-400 bg-clip-text text-transparent">
               We're Live
@@ -151,18 +163,26 @@ export function ComingSoon({ config, onLaunch }: { config: LaunchConfig; onLaunc
           <p className="mt-4 text-sm text-white/50 font-mono uppercase tracking-[0.3em]">Entering the experience</p>
         </div>
 
-        <style>{`@keyframes launchReveal { 0% { opacity: 0; transform: scale(0.5) blur(20px); } 100% { opacity: 1; transform: scale(1) blur(0); } }`}</style>
+        <style>{revealKeyframes[revealAnim] || revealKeyframes.burst}</style>
       </div>
     );
   }
 
   const headline = config.headline || 'Something extraordinary is coming';
   const subheadline = config.subheadline || 'Team Synf — We don\u2019t do ordinary.';
+  const socials = config.social_links || {};
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden bg-ink-950">
-      {/* Aurora background */}
-      <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" />
+      {/* Background image or aurora canvas */}
+      {config.bg_image_url ? (
+        <div className="absolute inset-0">
+          <img src={config.bg_image_url} alt="" className="h-full w-full object-cover opacity-25" />
+          <div className="absolute inset-0 bg-gradient-to-b from-ink-950/60 via-ink-950/70 to-ink-950" />
+        </div>
+      ) : (
+        <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" />
+      )}
 
       {/* Film grain */}
       <div className="grain pointer-events-none absolute inset-0 opacity-[0.12]" />
@@ -184,9 +204,9 @@ export function ComingSoon({ config, onLaunch }: { config: LaunchConfig; onLaunc
       <div className="relative z-10 flex flex-col items-center px-6 text-center">
         {/* Eyebrow */}
         <div className="mb-8 flex items-center gap-3 animate-fade-in">
-          <span className="h-px w-8 bg-gradient-to-r from-transparent to-synf-500" />
-          <span className="font-mono text-[10px] uppercase tracking-[0.4em] text-synf-400 sm:text-xs">Team Synf</span>
-          <span className="h-px w-8 bg-gradient-to-l from-transparent to-synf-500" />
+          <span className="h-px w-8" style={{ background: `linear-gradient(to right, transparent, ${accentColor})` }} />
+          <span className="font-mono text-[10px] uppercase tracking-[0.4em] sm:text-xs" style={{ color: accentColor }}>Team Synf</span>
+          <span className="h-px w-8" style={{ background: `linear-gradient(to left, transparent, ${accentColor})` }} />
         </div>
 
         {/* Headline */}
@@ -201,16 +221,23 @@ export function ComingSoon({ config, onLaunch }: { config: LaunchConfig; onLaunc
           {subheadline}
         </p>
 
+        {/* Detail text */}
+        {config.show_details && config.detail_text && (
+          <p className="mt-3 max-w-lg text-xs text-white/40 animate-fade-up" style={{ animationDelay: '0.2s' }}>
+            {config.detail_text}
+          </p>
+        )}
+
         {/* Countdown */}
         {timeLeft && (
           <div className="mt-10 flex items-center gap-4 sm:gap-8 md:gap-12 animate-scale-in" style={{ animationDelay: '0.3s' }}>
-            <CountdownUnit value={timeLeft.days} label="Days" />
+            <CountdownUnit value={timeLeft.days} label="Days" accentColor={accentColor} />
             <span className="font-display text-3xl text-white/20 sm:text-5xl">:</span>
-            <CountdownUnit value={timeLeft.hours} label="Hours" />
+            <CountdownUnit value={timeLeft.hours} label="Hours" accentColor={accentColor} />
             <span className="font-display text-3xl text-white/20 sm:text-5xl">:</span>
-            <CountdownUnit value={timeLeft.minutes} label="Minutes" />
+            <CountdownUnit value={timeLeft.minutes} label="Minutes" accentColor={accentColor} />
             <span className="font-display text-3xl text-white/20 sm:text-5xl">:</span>
-            <CountdownUnit value={timeLeft.seconds} label="Seconds" />
+            <CountdownUnit value={timeLeft.seconds} label="Seconds" accentColor={accentColor} />
           </div>
         )}
 
@@ -229,18 +256,41 @@ export function ComingSoon({ config, onLaunch }: { config: LaunchConfig; onLaunc
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="you@email.com"
-                  className="flex-1 rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm text-white placeholder:text-white/30 backdrop-blur-sm focus:border-synf-400 focus:outline-none focus:ring-1 focus:ring-synf-400 transition"
+                  className="flex-1 rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm text-white placeholder:text-white/30 backdrop-blur-sm focus:outline-none focus:ring-1 transition"
+                  style={{ borderColor: `rgba(${hexToRgb(accentColor)}, 0.5)` }}
                 />
                 <button
                   type="submit"
                   disabled={submitting}
                   className="btn-primary group"
+                  style={accentColor !== '#ff2d6f' ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}
                 >
                   {submitting ? 'Joining…' : <>Notify me <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" /></>}
                 </button>
               </form>
             )}
             <p className="mt-3 text-center text-[11px] text-white/30">Be the first to know when we go live.</p>
+          </div>
+        )}
+
+        {/* Social links */}
+        {(socials.instagram || socials.x || socials.youtube) && (
+          <div className="mt-8 flex items-center gap-4 animate-fade-up" style={{ animationDelay: '0.55s' }}>
+            {socials.instagram && (
+              <a href={socials.instagram} target="_blank" rel="noopener noreferrer" className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/5 text-white/60 transition hover:border-white/30 hover:text-white">
+                <Instagram size={16} />
+              </a>
+            )}
+            {socials.x && (
+              <a href={socials.x} target="_blank" rel="noopener noreferrer" className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/5 text-white/60 transition hover:border-white/30 hover:text-white">
+                <TwitterX size={16} />
+              </a>
+            )}
+            {socials.youtube && (
+              <a href={socials.youtube} target="_blank" rel="noopener noreferrer" className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/5 text-white/60 transition hover:border-white/30 hover:text-white">
+                <Youtube size={16} />
+              </a>
+            )}
           </div>
         )}
 
@@ -251,4 +301,10 @@ export function ComingSoon({ config, onLaunch }: { config: LaunchConfig; onLaunc
       </div>
     </div>
   );
+}
+
+function hexToRgb(hex: string): string | null {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!m) return null;
+  return `${parseInt(m[1], 16)},${parseInt(m[2], 16)},${parseInt(m[3], 16)}`;
 }
